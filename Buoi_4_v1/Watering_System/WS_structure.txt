@@ -1,0 +1,56 @@
+D:\HOC_NHUNG\BAI_TAP\Buoi_4\Watering_System
+Watering_System          # THƯ MỤC GỐC
+│
+├── Application/                       # MÃ ỨNG DỤNG CHUNG (DÙNG CHO CẢ 2)
+│   ├── Inc/                           # Header files
+│   │   ├── system_states.h            # Định nghĩa trạng thái hệ thống
+│   │   ├── sensor_interface.h         # Giao diện cảm biến
+│   │   ├── pump_control.h             # Điều khiển bơm
+│   │   ├── led_controller.h           # Điều khiển LED
+│   │   ├── button_handler.h           # Xử lý nút nhấn
+│   │   └── irrigation_config.h        # Cấu hình ứng dụng
+│   │
+│   └── Src/                           # Mã nguồn
+│       ├── system_states.c            # Quản lý trạng thái
+│       ├── sensor_interface.c         # Giao tiếp cảm biến
+│       ├── pump_control.c             # Logic bơm
+│       ├── led_controller.c           # Điều khiển LED
+│       ├── button_handler.c           # Xử lý nút nhấn
+│       └── main_logic.c               # Luồng điều khiển chính
+│
+├── Drivers/                           # DRIVER PHẦN CỨNG
+│   ├── STM32_Drivers/                 # DRIVER CHO STM32 THẬT
+│   │   ├── dht11_driver.c             # Driver DHT11 thật
+│   │   ├── dht11_driver.h
+│   │   ├── pump_driver.c              # Driver bơm thật
+│   │   ├── pump_driver.h
+│   │   ├── led_driver.c               # Driver LED thật
+│   │   ├── led_driver.h
+│   │   ├── button_driver.c            # Driver nút nhấn thật
+│   │   └── button_driver.h
+│   │
+│   └── Sim_Drivers/                   # DRIVER MÔ PHỎNG CHO VSCode
+│       ├── sim_dht11.c                # Giả lập DHT11
+│       ├── sim_dht11.h
+│       ├── sim_pump.c                 # Giả lập bơm
+│       ├── sim_pump.h
+│       ├── sim_led.c                  # Giả lập LED
+│       ├── sim_led.h
+│       ├── sim_button.c               # Giả lập nút nhấn
+│       └── sim_button.h
+│
+├── Simulation/                        # PROJECT MÔ PHỎNG TRÊN VSCODE
+│   ├── Src/                           # Mã nguồn mô phỏng
+│   │   └── main_sim.c                 # Hàm main() cho mô phỏng
+│   ├── Makefile                       # Makefile cho mô phỏng
+│   └── Build/                         # Thư mục build (tạo tự động)
+│
+├── STM32_Project/                     # PROJECT STM32 THẬT (CHO CUBEIDE)
+│   ├── Core/                          # Sinh bởi CubeIDE
+│   │   ├── Inc/                       
+│   │   ├── Src/
+│   │   └── main.c                     # Hàm main() cho STM32
+│   ├── Drivers/                       # Thư viện HAL của ST
+│   └── STM32_Project.ioc              # File cấu hình CubeMX
+│
+└── README.md                          # Hướng dẫn sử dụng

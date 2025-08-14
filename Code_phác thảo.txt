@@ -1,0 +1,102 @@
+#include <stdio.h>
+
+// --- A. Định nghĩa các trạng thái hoạt động bằng enum ---
+// Enum giúp code dễ đọc và tiết kiệm bộ nhớ hơn so với dùng chuỗi.
+typedef enum {
+    MODE_AUTO,
+    MODE_MANUAL
+} SystemMode;
+
+typedef enum {
+    PUMP_OFF,
+    PUMP_ON
+} PumpState;
+
+// --- B. Cấu trúc dữ liệu chính (Sử dụng struct và union) ---
+
+// 1. Cấu trúc dữ liệu cảm biến:
+// Dùng "__attribute__((packed))" để tránh padding bộ nhớ,
+// giúp cấu trúc này chiếm ít không gian hơn.
+// Ví dụ: Không có packed, cấu trúc có thể chiếm 12 bytes.
+// Với packed, nó sẽ chiếm đúng 7 bytes.
+typedef struct __attribute__((packed)) {
+    char sensor_id;       // 1 byte
+    int temperature_c;    // 4 bytes
+    short moisture_level; // 2 bytes
+} SensorData;
+
+// 2. Union để tối ưu bộ nhớ cho các thông báo:
+// Tại một thời điểm, chỉ cần lưu 1 trong 2 thông tin (mã lỗi HOẶC con trỏ chuỗi).
+// Union sẽ sử dụng vùng nhớ đủ lớn để chứa thành viên lớn nhất.
+typedef union {
+    int error_code;         // 4 bytes
+    const char* message_ptr;  // 4 bytes trên hệ thống 32-bit
+} SystemMessage;
+
+// 3. Cấu trúc chính của hệ thống, chứa tất cả các trạng thái và dữ liệu:
+typedef struct {
+    // Các biến trạng thái của hệ thống
+    SystemMode current_mode;
+    PumpState pump_state;
+
+    // Dữ liệu cảm biến
+    SensorData sensor_readings;
+
+    // Các tham số cấu hình hệ thống
+    int min_moisture_threshold;
+    int max_watering_duration;
+
+    // Union cho các thông báo lỗi
+    SystemMessage system_status;
+} SystemState;
+
+// --- C. Các biến toàn cục và từ khóa `static`/`volatile` ---
+
+// Sử dụng `static` để biến chỉ có thể được truy cập trong file này,
+// không bị các file khác can thiệp.
+static SystemState aws_system;
+
+// Dùng `volatile` cho một biến có thể bị thay đổi bởi ISR (ví dụ: nhấn nút).
+// Điều này ngăn trình biên dịch tối ưu hóa, đảm bảo chương trình luôn đọc
+// giá trị mới nhất từ bộ nhớ.
+volatile static int button_pressed_flag = 0;
+
+// Hàm khởi tạo hệ thống
+void initialize_system() {
+    printf("Initializing AWS system...\n");
+    aws_system.current_mode = MODE_AUTO;
+    aws_system.pump_state = PUMP_OFF;
+    aws_system.sensor_readings.sensor_id = 'A';
+    aws_system.sensor_readings.temperature_c = 25;
+    aws_system.sensor_readings.moisture_level = 750;
+    aws_system.min_moisture_threshold = 300;
+    aws_system.max_watering_duration = 600; // 10 minutes
+    aws_system.system_status.message_ptr = "System ready.";
+    printf("Initialization complete. Status: %s\n", aws_system.system_status.message_ptr);
+}
+
+// Hàm mô phỏng ISR khi nhấn nút
+void button_press_interrupt_handler() {
+    button_pressed_flag = 1;
+}
+
+// Hàm chính của chương trình
+int main() {
+    initialize_system();
+
+    // Mô phỏng việc nhấn nút để chuyển chế độ
+    button_press_interrupt_handler();
+
+    if (button_pressed_flag == 1) {
+        if (aws_system.current_mode == MODE_AUTO) {
+            aws_system.current_mode = MODE_MANUAL;
+            printf("Mode changed to MANUAL.\n");
+        } else {
+            aws_system.current_mode = MODE_AUTO;
+            printf("Mode changed to AUTO.\n");
+        }
+        button_pressed_flag = 0; // Reset cờ
+    }
+
+    return 0;
+}

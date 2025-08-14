@@ -1,0 +1,82 @@
+
+Input: 
+1. sensor: 
+- read_value:
+- lưu trữ value:
+- độ ẩm: 0 - 100(kiểu int)
+- nhiệt độ: float
+
+typedef struct{
+float temperature;
+int humidity
+
+} Sensor_value_Type;
+
+Mô phỏng:
+
+Không cho người dùng nhập MODE của button 1.
+Chỉ có việc nhấn và không nhấn
+
+Nút được nhấn thì mới chuyển:
++ chuyển MODE_AUTO
++ chuyển MODE_MANUAL
+
+
+LED:
++ Vàng 
++ Xanh 
++ Đỏ 
+
+void Led_Control(int mode){
+{
+if (mode == 0)
+
+}
+
+Led_control(0)
+
++
++
++
++
++
++
+
+
+
++ button: 
+Output
++ LED:
++ PUMP: 
++ Logging:
+
+
+Chúng ta chưa dùng:
+int main(){
+    
+    Init_Function();
+    
+    while(1)
+    {
+        Read_Sensor();
+        
+        Read_Sensor();
+        
+        Led_Control();
+        
+        Pump_Control();
+        
+    
+    return 0 ;
+    
+    
+    }
+    
+    
+    
+
+}
+install wsl
+connect wsl
+
+sudo apt install make

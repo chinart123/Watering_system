@@ -1,0 +1,77 @@
+                                HỆ THÔNG TƯỚI NƯỚC TỰ ĐỘNG
+Yêu cầu:
+- Chuyển tất cả thành tiếng anh
+- Đảm bảo các kiến thức đã học:
+    + Biến static( ngăn sử dụng biến này ở fiel khác)/ volatile( ngăn chương trình tự động hóa mọi thứ thành vòng lặp vô hạn)
+    + Padding/ Union
+- Viết lại toàn bộ nội dung bên dưới bằng text với sự bố trí rõ ràng và nhất quán hơn.
+
+
+
+Phần cứng:
+    Vi điều khiển: STM32
+    Cảm biến nhiệt độ, độ ẩm:
+    Thiết bị:
+        + Bơm nước mini
+        + LED trạng thái
+    Nút nhấn
+        + Nút 1
+        + Nút 2
+        
+    Giao tiếp  ( mô phỏng)
+        + Hàm gửi thông bao trạng thái/data đến một giao diện người dùng
+            e.g: In ra console/ Gửi qua UART/module không dây
+    
+Phần mềm: 
+A. Định nghĩa các trạng thái hoạt động
+1. Chế độ hệ thống:
+    + MODE_AUTO
+    + MODE_MANUAL
+
+2. Trạng thái tưới nước của bơm
+    + PUMP_OFF: Bơm không hoạt động
+    + PUMP_ON : Bơm đang hoạt động
+3. Trạng thái LED
+    + LED_NORMAL: Hệ thống hoạt động bình thường, không tưới
+    + LED_WATERING: Hệ thống đang tưới nước 
+    + LED_LOW_MOISTURE_ALERT: Độ ảm đất quá thấp( vì chưa tưới nước hoặc tưới nước không đủ)
+    + LED_ERROR: Lỗi hệ thống ( ví dụ: cảm biê hỏng/ bơm kẹt)
+    
+4. Cấu trúc dữ liệu chính
+    + DATABASE(lưu giá trị đọc từ cảm biến): Dữ liệu cảm biến
+    + Các tham số cấu hình: Cài đặt hệ thống
+        .Độ ẩm MAX -> Dừng tưới
+        .Độ ẩm MIN -> Tưới
+        .Thời gian tưới nước tối đa cho 1 lần
+
+B. Yêu cầu chức năng:
+1. Khởi tạo hệ thống:
+2. Đọc và xử lí dự liệu cảm bình:
+3. Logic điều khiển tưới nước tự động:
+4. Điều khiển bơm:
+5. Điều khiển LED trạng thái:
+6. Xử lí nút nhấn:
+7. Thông báo trạng thái:
+8. Tối ưu bộ nhớ:
+    + Tránh sử dụng quá nhiều chuỗi kí tự cố định (const chart *) nếu không gian flash hạn chế
+    + Có thể sử dụng các mã số hoặc enum để biểu thị thông báo
+    
+    
+C. Luồng hoạt động chính
+1. Sau khi khởi tạo, hệ thống sẽ chạy 1 vòng lặp vô hạn
+2. Trong mỗi vòng lặp, hệ thống sẽ
+    + Kiểm tra và xử lí các sự kiện nút nhấn
+    + Nếu ở chế độ tự động, kiểm tra và xử lí logic tưới nước
+    + Cập nhật trạng thái LED
+    + Có thể gửi báo cáo trạng thái định kì
+    + Có 1 độ trễ nhỏ để tiết kiệm năng lượng, phù hợp với chu kì hoạt động
+        
+D. Yêu cầu triển khai
+1. Triển khai toàn bộ chức năng của hệ thống SPWS bằng ngôn ngữ C
+2. Tổ chức mã nguồn 1 cách rõ ràng, dễ đọc, với các file header/source file riêng biệt
+3. Sử dụng enum và struct phù hợp để quản lí trạng thái dữ liệu
+4. Quản lí các biến static và extern 1 cách hợp lí, để điều khiển phạm vi và chia sẻ dữ liệu giữa các module
+5. Mô phỏng hoạt động của cảm biến, bơm nước, LED, nút nhấn bằng cách in ra console các thông báo và trạng thái tương ứng
+6. Đảm bảo hệ thống có thể chuyển đổi mượt mà giữa các chế độ và xử lí các tình huống như độ ẩm quá thấp, quá cao, hoặc người dùng can thiệp
+
+----------------------------------------

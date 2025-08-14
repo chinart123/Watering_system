@@ -1,0 +1,23 @@
+Stage_A.
+Chien@DESKTOP-617VVGL MSYS /d/HOC_NHUNG/BAI_TAP/Buoi_4/Watering_System/Simulation
+$ ./Build/watering_system_sim.exe
+
+=== AUTOMATIC IRRIGATION SYSTEM SIMULATION ===
+Initializing system...
+[SENSOR] Initialized
+[PUMP] Initialized
+[LED] Initialized
+Starting main loop...
+----------------------------------------      
+[BUTTON] Mode changed to MANUAL
+[BUTTON] Mode changed to AUTO
+[BUTTON] Mode changed to MANUAL
+[BUTTON] Mode changed to AUTO
+[BUTTON] Mode changed to MANUAL
+[BUTTON] Mode changed to AUTO
+[BUTTON] Mode changed to MANUAL
+[BUTTON] Mode changed to AUTO
+[BUTTON] Mode changed to MANUAL
+
+
+Stage_B.

@@ -1,0 +1,135 @@
+Dưới đây là triển khai chi tiết 2 giai đoạn cho dự án SPWS, được thiết kế để phát triển từ nhỏ đến lớn một cách mượt mà:
+
+Giai đoạn 1: Cấu trúc đơn giản (Dự án nhỏ)
+spws/
+├── inc/
+│   └── config.h          # File cấu hình duy nhất
+└── src/
+    ├── main.c            # Code chính
+    ├── sensors.c         # Xử lý cảm biến
+    └── actuators.c       # Điều khiển thiết bị
+    
+1. File config.h (Gộp tất cả)
+#pragma once
+#include <stdint.h>
+
+// === Hardware Configuration ===
+#define PUMP_GPIO_PORT    GPIOA
+#define PUMP_GPIO_PIN     GPIO_PIN_0
+#define LED_GPIO_PORT     GPIOB
+#define LED_GPIO_PIN      GPIO_PIN_1
+
+// === System Parameters ===
+typedef enum {
+    SYS_MODE_AUTO,
+    SYS_MODE_MANUAL,
+    SYS_MODE_CALIBRATION
+} SystemMode;
+
+typedef enum {
+    PUMP_OFF,
+    PUMP_ON
+} PumpState;
+
+// === Sensor Thresholds ===
+#define MOISTURE_MIN_THRESHOLD  30  // %
+#define MOISTURE_MAX_THRESHOLD  60  // %
+#define TEMP_ALARM_THRESHOLD    40  // °C
+
+// === Timing Constants ===
+#define WATERING_DURATION_MS    10000  // 10s
+#define SENSOR_READ_INTERVAL_MS 5000   // 5s   
+
+File main.c (Sử dụng cấu hình)
+#include "config.h"
+
+SystemMode current_mode = SYS_MODE_AUTO;
+
+void init_hardware() {
+    HAL_GPIO_WritePin(PUMP_GPIO_PORT, PUMP_GPIO_PIN, PUMP_OFF);
+}
+
+2. File main.c (Sử dụng cấu hình)
+
+#include "config.h"
+
+SystemMode current_mode = SYS_MODE_AUTO;
+
+void init_hardware() {
+    HAL_GPIO_WritePin(PUMP_GPIO_PORT, PUMP_GPIO_PIN, PUMP_OFF);
+}
+        
+        
+Các file tách riêng:
+1. File hardware_cfg.h
+spws/
+├── inc/
+│   ├── config.h               # File tổng hợp
+│   └── config/                # Thư mục cấu hình
+│       ├── hardware_cfg.h     # Phần cứng
+│       ├── system_cfg.h       # Trạng thái hệ thống
+│       ├── thresholds_cfg.h   # Ngưỡng
+│       └── timing_cfg.h       # Thời gian
+└── src/
+    ├── main.c
+    ├── drivers/               # Thêm thư mục driver
+    │   ├── sensor.c
+    │   └── actuator.c
+    └── system/
+        └── state_machine.c    # Thêm module mới
+
+
+2. File system_cfg.h
+#pragma once
+
+typedef enum {
+    SYS_MODE_AUTO,
+    SYS_MODE_MANUAL,
+    SYS_MODE_ERROR,
+    SYS_MODE_CALIBRATION
+} SystemMode;
+
+typedef enum {
+    PUMP_OFF,
+    PUMP_ON,
+    PUMP_ERROR
+} PumpState;
+
+
+3. File thresholds_cfg.h
+#pragma once
+
+// Sensor Thresholds
+typedef struct {
+    uint8_t moisture_min;  // %
+    uint8_t moisture_max;  // %
+    int8_t temp_max;       // °C
+} Thresholds;
+
+const Thresholds DEFAULT_THRESHOLDS = {
+    .moisture_min = 30,
+    .moisture_max = 60,
+    .temp_max = 40
+};
+
+
+4. File timing_cfg.h
+#pragma once
+
+// Timing Constants (ms)
+#define WATERING_DURATION       10000
+#define SENSOR_READ_INTERVAL    5000
+#define DEBOUNCE_DELAY          200
+
+
+5. File config.h (Tổng hợp)
+#pragma once
+
+// Master configuration file
+#include "config/hardware_cfg.h"
+#include "config/system_cfg.h"
+#include "config/thresholds_cfg.h"
+#include "config/timing_cfg.h"
+
+// Common macros
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))         
