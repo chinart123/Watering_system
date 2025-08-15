@@ -1,0 +1,453 @@
+Giai đoạn A: Thiết lập hệ thống cơ bản
+Mục tiêu chính:
+Xây dựng nền tảng phần cứng trừu tượng (HAL), thiết lập cấu trúc dự án và đảm bảo hệ thống hoạt động cơ bản trên cả mô phỏng (VSCode) và phần cứng thật (STM32).
+
+
+1. Mục tiêu & Nhiệm vụ
+Thành phần	            Chi tiết
+Mục tiêu	            - Thiết lập HAL cho GPIO/Timer
+                        - Xây dựng hệ thống đa nền tảng
+                        - Kiểm thử nền tảng cơ bản
+
+Nhiệm vụ	            ▶ Tạo cấu trúc thư mục cơ bản
+                        ▶ Triển khai HAL layer:
+                        - hal_gpio.h/c (GPIO abstraction)
+                        - hal_time.h/c (Timer abstraction)
+                        ▶ Viết driver cho từng nền tảng:
+                        - Simulator: sim_gpio.c, sim_time.c
+                        - STM32: stm32_gpio.c, stm32_time.c
+                        ▶ Xây dựng hàm main riêng cho mỗi nền tảng
+Tiêu chí thành công	    ✅ Code HAL biên dịch không lỗi
+                        ✅ Driver mô phỏng/phần cứng hoạt động độc lập
+                        ✅ Kiểm thử GPIO/Timer thành công trên cả 2 nền tảng
+**Note**Core\Inc\App và Core\Inc\App vẫn cần thiết nhưng sẽ được triển khai trong giai đoạn B (Logic điều khiển cốt lõi), không phải trong giai đoạn A.
+D:\HOC_NHUNG\BAI_TAP\Buoi_4\Buoi_4_v2\Watering_System\
+├── Core/
+│   ├── Inc/
+│   │   └── HAL/                   # Chỉ HAL trong giai đoạn A
+│   │       ├── hal_gpio.h
+│   │       └── hal_time.h
+│   └── Src/
+│       └── HAL/                   # Triển khai HAL chung
+│           ├── hal_gpio.c
+│           └── hal_time.c
+├── Platforms/
+│   ├── Simulator_VSCode/
+│   │   ├── Drivers/
+│   │   │   ├── sim_gpio.c         # Driver giả lập GPIO
+│   │   │   └── sim_time.c         # Driver giả lập Timer
+│   │   └── main_sim.c             # Main cho mô phỏng
+│   └── STM32F103C8T6/
+│       ├── Drivers/
+│       │   ├── stm32_gpio.c       # Driver GPIO thật
+│       │   └── stm32_time.c       # Driver Timer thật
+│       ├── Project/               # CubeMX project
+│       │   ├── Core/
+│       │   └── STM32.ioc
+│       └── main.c                 # Main cho STM32
+└── Docs/
+    └── hardware_map.md            # Tài liệu ánh xạ chân
+
+
+2. Logic chung cho VSCode & STM32
+Cấu trúc file chính:
+// Core/Inc/HAL/hal_gpio.h
+#pragma once
+typedef enum { GPIO_LOW, GPIO_HIGH } GPIO_State;
+void HAL_GPIO_Write(uint8_t pin, GPIO_State state);
+GPIO_State HAL_GPIO_Read(uint8_t pin);
+
+// Core/Src/HAL/hal_gpio.c
+#include "hal_gpio.h"
+// Gọi hàm driver tương ứng (triển khai ở Platforms)
+void HAL_GPIO_Write(uint8_t pin, GPIO_State state) {
+    PLATFORM_GPIO_Write(pin, state); // Platform-specific implementation
+}                        
+
+
+Quy tắc phát triển:
++ Platform-Independent Code: Toàn bộ logic trong Core/ không tham chiếu trực tiếp đến phần cứng
++ Hàm callback: Định nghĩa hàm platform-specific trong HAL (vd: PLATFORM_GPIO_Write())
++ Header Guard: Sử dụng #pragma once trong tất cả header files
+
+3. Mô phỏng trên VSCode
+Mục tiêu kiểm thử:
++ GPIO giả lập: Xuất console log khi ghi/đọc
++ Timer giả lập: Đo thời gian chính xác ±5ms
++ Chương trình chạy liên tục không crash
+
+Bài test mẫu:
+// Platforms/Simulator_VSCode/main_sim.c
+#include "hal_gpio.h"
+#include "hal_time.h"
+
+int main() {
+    HAL_GPIO_Write(LED_PIN, GPIO_HIGH);
+    printf("[SIM] LED ON\n");
+    
+    HAL_Delay(1000); // Delay 1s
+    
+    if (HAL_GPIO_Read(BUTTON_PIN) == GPIO_HIGH) {
+        printf("[SIM] Button pressed!\n");
+    }
+}
+
+Kịch bản test:
+1. GPIO Write Test: Kiểm tra console xuất hiện [SIM] LED ON
+2. Delay Test: Đảm bảo delay giữa 995-1005ms
+3. GPIO Read Test: Nhập giá trị giả lập từ bàn phím → kiểm tra console log
+
+4. Triển khai trên STM32
+Mục tiêu kiểm thử:
++ LED vật lý nhấp nháy chu kỳ 1s
++ Nhấn nút → đọc đúng trạng thái
++ Không có lỗi runtime (hardfault, stack overflow)
+Bài test mẫu:
+// Platforms/STM32F103C8T6/main.c
+#include "stm32f1xx_hal.h"
+#include "hal_gpio.h"
+
+#define LED_PIN    GPIO_PIN_13
+#define BUTTON_PIN GPIO_PIN_0
+
+int main(void) {
+    HAL_Init();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    
+    while (1) {
+        HAL_GPIO_Write(LED_PIN, GPIO_HIGH);
+        HAL_Delay(500);
+        HAL_GPIO_Write(LED_PIN, GPIO_LOW);
+        HAL_Delay(500);
+        
+        if (HAL_GPIO_Read(BUTTON_PIN) == GPIO_HIGH) {
+            // Xử lý nhấn nút
+        }
+    }
+}
+
+Kịch bản test:
+1. LED Blink Test: Dùng đồng hồ đo chu kỳ sáng/tắt LED
+2. Button Test:
++ Nhấn nút vật lý → LED sáng ngay
++ Nhả nút → LED tắt
+3. Stress Test: Chạy liên tục 10 phút → kiểm tra nhiệt độ chip
+
+Checklist hoàn thành giai đoạn A
+Hoàn thiện cấu trúc thư mục theo sơ đồ
+
+HAL layer đóng gói đủ GPIO/Timer
+
+Simulator: Pass 3/3 test case
+
+STM32: LED nhấp nháy đúng chu kỳ ±20ms
+
+Tài liệu hardware_map.md cập nhật chân GPIO thật
+
+💡 Tips thực hiện:
+
+Ưu tiên hoàn thiện simulator trước khi đụng phần cứng
+
+Sử dụng printf() debug trên cả 2 nền tảng
+
+Commit code sau mỗi thành phần hoàn thiện (HAL → Driver → Test)
+---------------------------------------------------------------------
+A. SYSTEM STATES DEFINITION
+// System Modes
+typedef enum {
+    MODE_AUTO,      // Automatic watering based on sensors
+    MODE_MANUAL     // Manual control mode
+} SystemMode;
+
+// Pump States
+typedef enum {
+    PUMP_OFF,       // Pump inactive
+    PUMP_ON         // Pump active
+} PumpState;
+
+// LED States
+typedef enum {
+    LED_NORMAL,             // Green: Normal operation
+    LED_WATERING,           // Yellow: Watering in progress
+    LED_LOW_MOISTURE_ALERT, // Red: Soil moisture below threshold
+    LED_ERROR               // Blinking Red: System error
+} LEDState;
+
+B. CORE DATA STRUCTURES
+// Sensor Data
+typedef struct {
+    volatile float soil_moisture;  // 0-100%
+    volatile float temperature;    // °C
+} SensorData;
+
+// System Configuration
+typedef struct {
+    float moisture_min_th;     // Minimum moisture threshold
+    float moisture_max_th;     // Maximum moisture threshold
+    uint32_t max_watering_time;// Max watering duration (ms)
+    uint32_t check_interval;   // Sensor check interval (ms)
+} SystemConfig;
+
+// System State
+typedef struct {
+    SystemMode current_mode;
+    PumpState pump_state;
+    LEDState led_state;
+    SystemConfig config;
+    SensorData sensor_readings;
+    
+    // Internal state tracking ?????????
+    uint32_t last_sensor_check; //?????????????
+    uint32_t pump_start_time; //?????????????
+    bool manual_override; //?????????????
+} SystemState;
+
+Giải thích và Kiểm thử thực tế
+1.Kiểm tra last_sensor_check: 
+Mục đích:
+-Lưu thời điểm (timestamp) cuối cùng khi hệ thống đọc giá trị từ cảm biến DHT11.
+-Đơn vị: milliseconds (sử dụng HAL_GetTick() của HAL library).
+Cách hoạt động với STM32:
+// Trong vòng lặp chính:
+if (HAL_GetTick() - last_sensor_check > CHECK_INTERVAL) {
+    read_DHT11(); // Gửi tín hiệu START và đọc data từ DHT11
+    last_sensor_check = HAL_GetTick(); // Cập nhật thời điểm cuối cùng
+}
+Lưu ý:
+-DHT11 yêu cầu khoảng thời gian tối thiểu 2 giây giữa các lần đọc.
+-Nên đặt CHECK_INTERVAL = 2000 (ms) để tránh lỗi cảm biến.
+---->Đặt breakpoint tại read_DHT11(), xác nhận hàm được gọi mỗi 2 giây.
+2. Kiểm tra pump_start_time: 
+Mục đích:
+- Ghi lại thời điểm bơm nước được bật (dùng để tính thời gian bơm đã hoạt động).
+- Ngăn chặn bơm chạy quá lâu (vd: quá 30 giây) dẫn đến ngập nước.
+
+Triển khai trên STM32:
+void start_pump() {
+    HAL_GPIO_WritePin(PUMP_GPIO_Port, PUMP_Pin, GPIO_PIN_SET); // Bật bơm
+    pump_start_time = HAL_GetTick(); // Ghi lại thời điểm bắt đầu
+}
+
+void check_pump_timeout() {
+    if (HAL_GetTick() - pump_start_time > MAX_PUMP_TIME) {
+        HAL_GPIO_WritePin(PUMP_GPIO_Port, PUMP_Pin, GPIO_PIN_RESET); // Tắt bơm
+    }
+}
+Hardware Connection:
+Chân điều khiển bơm nối qua transistor/MOSFET (vd: GPIO PA1).
+---->Bật chế độ debug, theo dõi biến này khi nhấn nút tưới thủ công.
+3. Kiểm tra manual_override:
+Mục đích:
+- Cờ báo hiệu hệ thống đang bị "ghi đè" bởi người dùng (tắt chế độ tự động).
+- Khi = true: Hệ thống bỏ qua logic tự động, chỉ phản hồi nút nhấn.
+Ví dụ với nút nhấn STM32:
+// Xử lý ngắt nút nhấn (EXTI)
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    if (GPIO_Pin == BUTTON_Pin) {
+        manual_override = !manual_override; // Đảo trạng thái
+    }
+}
+Lưu ý:
+Cần debounce nút nhấn bằng phần cứng (tụ 100nF) hoặc phần mềm (vd: kiểm tra trạng thái sau 50ms).
+
+---->Nhấn nút MODE, xác nhận LED chuyển màu (vd: xanh ↔ vàng).
+
+
+C. FUNCTIONAL REQUIREMENTS
+1. System Initialization
+
+-Initialize GPIO for sensors, pump, LED, buttons
+
+-Set default configuration values
+
+-Start in MODE_AUTO with pump OFF
+
+
+2. Sensor Data Handling
+
+-Periodically read sensors (using ADC)
+
+-Apply moving average filter:
+#define SAMPLE_SIZE 5
+static float moisture_readings[SAMPLE_SIZE];
+
+float filtered_moisture() {
+    static uint8_t idx = 0;
+    moisture_readings[idx] = HAL_ReadMoisture();
+    idx = (idx + 1) % SAMPLE_SIZE;
+    
+    float sum = 0;
+    for(uint8_t i=0; i<SAMPLE_SIZE; i++) {
+        sum += moisture_readings[i];
+    }
+    return sum / SAMPLE_SIZE;
+}
+
+3. Automatic Watering Logic
+void update_watering_logic(SystemState* state) {
+    if(state->current_mode == MODE_AUTO) {
+        if(state->sensor_readings.soil_moisture < state->config.moisture_min_th) {
+            start_pumping(state);
+        }
+        else if(state->sensor_readings.soil_moisture > state->config.moisture_max_th ||
+                (HAL_GetTick() - state->pump_start_time) > state->config.max_watering_time) { //?????
+            stop_pumping(state);
+        }
+    }
+}
+
+4. Button Handling Logic
+void handle_buttons(SystemState* state) {
+    static uint32_t last_button1_time = 0;
+    
+    // Button 1: Mode toggle (with debouncing)
+    if(HAL_Button1_Pressed() && (HAL_GetTick() - last_button1_time > 250)) {
+        state->current_mode = (state->current_mode == MODE_AUTO) ? MODE_MANUAL : MODE_AUTO;
+        last_button1_time = HAL_GetTick();
+        
+        if(state->current_mode == MODE_MANUAL) {
+            stop_pumping(state);
+        }
+    }
+    
+    // Button 2: Manual watering
+    if(state->current_mode == MODE_MANUAL && HAL_Button2_Pressed()) {
+        start_pumping(state);
+        state->pump_start_time = HAL_GetTick();
+    }
+}
+
+5. LED State Management
+void update_led_state(SystemState* state) {
+    if(sensor_error()) {
+        state->led_state = LED_ERROR;
+    }
+    else if(state->pump_state == PUMP_ON) {
+        state->led_state = LED_WATERING;
+    }
+    else if(state->sensor_readings.soil_moisture < state->config.moisture_min_th) {
+        state->led_state = LED_LOW_MOISTURE_ALERT;
+        // Force to AUTO mode if moisture too low
+        state->current_mode = MODE_AUTO;
+    }
+    else {
+        state->led_state = LED_NORMAL;
+    }
+    
+    // Update physical LED
+    set_led_color(state->led_state);
+}
+
+D. MAIN OPERATION FLOW
+int main(void) {
+    SystemState sys_state;
+    system_init(&sys_state);
+    
+    while(1) {
+        // 1. Handle button presses
+        handle_buttons(&sys_state);
+        
+        // 2. Read and process sensor data (periodically)
+        if(HAL_GetTick() - sys_state.last_sensor_check > sys_state.config.check_interval) {
+            read_sensors(&sys_state);
+            sys_state.last_sensor_check = HAL_GetTick();
+        }
+        
+        // 3. Execute watering logic
+        update_watering_logic(&sys_state);
+        
+        // 4. Update status indicators
+        update_led_state(&sys_state);
+        report_system_status(&sys_state);
+        
+        // 5. Power management
+        HAL_Delay(50);  // 50ms delay for power saving
+    }
+}
+
+E. MEMORY OPTIMIZATION TECHNIQUES
+1. Use enums instead of strings:
+const char* get_state_name(LEDState state) {
+    static const char* names[] = {
+        [LED_NORMAL] = "NORMAL",
+        [LED_WATERING] = "WATERING",
+        [LED_LOW_MOISTURE_ALERT] = "LOW_MOISTURE",
+        [LED_ERROR] = "ERROR"
+    };
+    return names[state];
+}
+
+
+2. Use bit-fields for compact storage:
+typedef struct {
+    uint8_t mode      : 1;  // 0: AUTO, 1: MANUAL
+    uint8_t pump      : 1;  // 0: OFF, 1: ON
+    uint8_t led_state : 2;  // 4 LED states
+    uint8_t error     : 1;  // Error flag
+} CompactState;
+
+
+F. TESTING REQUIREMENTS
+Simulator Tests (VSCode):
+void test_auto_mode() {
+    SystemState test_state = {0};
+    test_state.current_mode = MODE_AUTO;
+    test_state.sensor_readings.soil_moisture = 25.0f;  // Below threshold
+    
+    update_watering_logic(&test_state);
+    assert(test_state.pump_state == PUMP_ON);
+    
+    test_state.sensor_readings.soil_moisture = 65.0f;  // Above threshold
+    update_watering_logic(&test_state);
+    assert(test_state.pump_state == PUMP_OFF);
+}
+
+void test_moisture_alert() {
+    SystemState test_state = {0};
+    test_state.current_mode = MODE_MANUAL;
+    test_state.sensor_readings.soil_moisture = 20.0f;  // Very low
+    
+    update_led_state(&test_state);
+    assert(test_state.led_state == LED_LOW_MOISTURE_ALERT);
+    assert(test_state.current_mode == MODE_AUTO);  // Should force to AUTO
+}
+
+Hardware Tests (STM32):
+-LED color changes match system state
+-Pump activates when:
+-Moisture < threshold (AUTO mode)
+-Button pressed (MANUAL mode)
+-Mode switching time < 100ms
+-Power consumption < 5mA in idle
+
+G. DIRECTORY STRUCTURE
+Watering_System/
+├── Core/
+│   ├── Inc/
+│   │   ├── App/
+│   │   │   ├── irrigation.h
+│   │   │   └── sensor_mgr.h
+│   │   └── Services/
+│   │       ├── button_svc.h
+│   │       └── led_service.h
+│   └── Src/
+│       ├── App/
+│       │   ├── irrigation.c
+│       │   └── sensor_mgr.c
+│       └── Services/
+│           ├── button_svc.c
+│           └── led_service.c
+├── Platforms/
+│   ├── Simulator_VSCode/
+│   └── STM32F103C8T6/
+└── Docs/
+    └── state_diagram.md
+
+-This design ensures:
++Clear separation between hardware abstraction and business logic
++Efficient memory usage with optimized data structures
++Responsive button handling with debouncing
++Automatic fail-safe when moisture is critically low
++Consistent state management across modes
++Testable components for both simulation and hardware    
+-------------------------------------------------------------

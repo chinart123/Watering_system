@@ -1,0 +1,41 @@
+D:\HOC_NHUNG\BAI_TAP\Buoi_4\Buoi_4_v2\Watering_System
+Watering_System/
+├── Core/                      # Mã nguồn DÙNG CHUNG (90% code)
+│   ├── Inc/                   # Header files - Giao diện
+│   │   ├── App/               # Application interfaces
+│   │   │   ├── irrigation.h   # Logic tưới nước chính
+│   │   │   └── state_mgr.h    # Quản lý trạng thái hệ thống
+│   │   ├── Services/          # Service interfaces
+│   │   │   ├── sensor_svc.h   # Dịch vụ cảm biến
+│   │   │   └── button_svc.h   # Dịch vụ nút nhấn
+│   │   └── HAL/               # Hardware Abstraction Layer
+│   │       ├── hal_gpio.h     # GPIO abstraction
+│   │       └── hal_time.h     # Time abstraction
+│   └── Src/                   # Mã nguồn triển khai
+│       ├── App/               # Logic nghiệp vụ chính
+│       │   ├── irrigation.c   # Triển khai logic tưới
+│       │   └── state_mgr.c    # Triển khai quản lý trạng thái
+│       └── Services/          # Triển khai dịch vụ
+│           ├── sensor_svc.c   # Xử lý dữ liệu cảm biến
+│           └── button_svc.c   # Xử lý nút nhấn
+│
+├── Platforms/                 # Mã nguồn PHỤ THUỘC nền tảng
+│   ├── Simulator_VSCode/      # Dành cho mô phỏng trên PC
+│   │   ├── Drivers/           # Driver giả lập
+│   │   │   ├── sim_gpio.c     # GPIO giả lập
+│   │   │   └── sim_time.c     # Time giả lập
+│   │   ├── Project/           # Cấu hình project
+│   │   │   └── Makefile       # Makefile cho mô phỏng
+│   │   └── main_sim.c         # Hàm main() cho mô phỏng
+│   │
+│   └── STM32F103C8T6/         # Dành cho STM32 thật
+│       ├── Drivers/           # Driver phần cứng thật
+│       │   ├── stm32_gpio.c   # GPIO cho STM32
+│       │   └── stm32_time.c   # Time cho STM32
+│       ├── Project/           # Project CubeIDE
+│       │   ├── Core/          # Code sinh bởi CubeMX
+│       │   └── STM32.ioc      # File cấu hình CubeMX
+│       └── main.c             # Hàm main() cho STM32
+│
+├── Middleware/                # Thư viện bên thứ 3 (nếu cần)
+└── Docs/                      # Tài liệu, sơ đồ, hướng dẫn

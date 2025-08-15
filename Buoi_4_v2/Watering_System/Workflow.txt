@@ -1,0 +1,156 @@
+Giai đoạn A: Thiết lập hệ thống cơ bản
+
+
+D:\HOC_NHUNG\BAI_TAP\Buoi_4\Buoi_4_v2\Watering_System\
+Watering_System/
+├── Core/
+│   ├── Inc/
+│   │   └── HAL/
+│   │       ├── hal_gpio.h     # Định nghĩa GPIO interface
+│   │       └── hal_time.h     # Định nghĩa Timer interface
+│   └── Src/
+│       └── HAL/
+│           ├── hal_gpio.c     # Triển khai chung (gọi platform)
+│           └── hal_time.c     # Triển khai chung
+├── Platforms/
+│   ├── Simulator_VSCode/
+│   │   ├── Drivers/
+│   │   │   ├── sim_gpio.c     # GPIO giả lập
+│   │   │   └── sim_time.c     # Timer giả lập
+│   │   └── main_sim.c         # Hàm main mô phỏng
+│   └── STM32F103C8T6/
+│       ├── Drivers/
+│       │   ├── stm32_gpio.c   # GPIO STM32
+│       │   └── stm32_time.c   # Timer STM32
+│       ├── Project/           # Thư mục dành cho project CubeIDE
+│       │   ├── Core/          # Code sinh bởi CubeMX
+│       │   └── STM32.ioc      # File cấu hình CubeMX
+│       └── main.c             # Hàm main STM32
+├── Docs/
+│   └── hardware_map.md        # Ánh xạ chân phần cứng
+└── README.md                  # Hướng dẫn cài đặt và sử dụng
+
+Giai đoạn B: Logic điều khiển cốt lõi
+D:\HOC_NHUNG\BAI_TAP\Buoi_4\Buoi_4_v2\Watering_System
+Watering_System/
+├── Core/
+│   ├── Inc/
+│   │   ├── HAL/               # (Giai đoạn 1)
+│   │   ├── App/
+│   │   │   ├── irrigation.h   # Interface logic tưới
+│   │   │   └── sensor_mgr.h   # Quản lý cảm biến
+│   │   └── Services/
+│   │       └── pump_ctrl.h    # Điều khiển bơm
+│   └── Src/
+│       ├── HAL/               # (Giai đoạn 1)
+│       ├── App/
+│       │   ├── irrigation.c   # Logic tưới tự động
+│       │   └── sensor_mgr.c   # Đọc và xử lý cảm biến
+│       └── Services/
+│           └── pump_ctrl.c    # Triển khai điều khiển bơm
+├── Platforms/
+│   ├── Simulator_VSCode/      # (Giai đoạn 1)
+│   └── STM32F103C8T6/         # (Giai đoạn 1)
+└── Docs/
+    └── state_diagram.md       # Sơ đồ chuyển trạng thái
+
+Giai đoạn C: Tương tác người dùng
+D:\HOC_NHUNG\BAI_TAP\Buoi_4\Buoi_4_v2\Watering_System
+Watering_System/
+├── Core/
+│   ├── Inc/
+│   │   ├── HAL/               # (Giai đoạn 1)
+│   │   ├── App/
+│   │   │   ├── ...            # (Giai đoạn 2)
+│   │   │   └── ui_mgr.h       # Quản lý giao diện người dùng
+│   │   └── Services/
+│   │       ├── ...            # (Giai đoạn 2)
+│   │       ├── button_svc.h   # Xử lý nút nhấn
+│   │       └── led_service.h  # Điều khiển LED
+│   └── Src/
+│       ├── App/
+│       │   └── ui_mgr.c       # Triển khai quản lý UI
+│       └── Services/
+│           ├── button_svc.c   # Xử lý nút nhấn
+│           └── led_service.c  # Triển khai điều khiển LED
+├── Platforms/
+│   ├── Simulator_VSCode/
+│   │   └── Drivers/
+│   │       └── sim_led.c      # Giả lập LED (nếu cần)
+│   └── STM32F103C8T6/
+│       └── Drivers/
+│           └── stm32_led.c    # Điều khiển LED thật
+└── Docs/
+    └── ui_flow.md             # Luồng tương tác người dùng
+
+Kế Hoạch Triển Khai Rõ Ràng
+1. Giai đoạn A (Hiện tại):
+Chỉ tập trung vào HAL GPIO/Timer
+Triển khai driver cho simulator và STM32
+Hàm main cơ bản kiểm thử GPIO
+
+2. Giai đoạn B (Tiếp theo):
+Tạo thư mục Core/Inc/App và Core/Src/App
+Thêm logic tưới nước (irrigation.c/h)
+Thêm quản lý cảm biến (sensor_mgr.c/h)
+
+3. Giai đoạn C (Sau B):
+Thêm thư mục Core/Inc/Services và Core/Src/Services
+Triển khai xử lý nút nhấn (button_svc.c/h)
+Triển khai điều khiển LED (led_service.c/h)
+
+
+
+
+
+
+
+
+
+Giai đoạn D: Hoàn thiện hệ thống
+D:\HOC_NHUNG\BAI_TAP\Buoi_4\Buoi_4_v2\Watering_System
+Watering_System/
+├── Core/
+│   ├── Inc/
+│   │   └── Services/
+│   │       ├── ...            # (Giai đoạn 3)
+│   │       ├── filter.h       # Lọc dữ liệu
+│   │       └── power_mgr.h    # Quản lý năng lượng
+│   └── Src/
+│       └── Services/
+│           ├── filter.c       # Triển khai bộ lọc
+│           └── power_mgr.c    # Tối ưu năng lượng
+├── Platforms/
+│   ├── Simulator_VSCode/      # (Giai đoạn 3)
+│   └── STM32F103C8T6/
+│       └── Drivers/
+│           └── stm32_low_power.c # Low-power mode
+└── Docs/
+    └── power_management.md    # Tài liệu tiết kiệm năng lượng
+
+
+Giai đoạn E: Mở rộng và tối ưu
+D:\HOC_NHUNG\BAI_TAP\Buoi_4\Buoi_4_v2\Watering_System
+Watering_System/
+├── Core/
+│   ├── Inc/
+│   │   ├── HAL/
+│   │   │   └── hal_uart.h     # Giao tiếp UART abstraction
+│   │   └── Services/
+│   │       └── iot_service.h  # IoT service
+│   └── Src/
+│       ├── HAL/
+│       │   └── hal_uart.c     # Triển khai UART chung
+│       └── Services/
+│           └── iot_service.c  # Gửi dữ liệu lên cloud
+├── Platforms/
+│   ├── Simulator_VSCode/
+│   │   └── Drivers/
+│   │       └── sim_uart.c     # Giả lập UART (printf)
+│   └── STM32F103C8T6/
+│       └── Drivers/
+│           └── stm32_uart.c   # UART thật cho STM32
+├── Middleware/
+│   └── MQTT/                  # Thư viện MQTT nhúng
+└── Docs/
+    └── iot_protocol.md        # Tài liệu giao thức IoT

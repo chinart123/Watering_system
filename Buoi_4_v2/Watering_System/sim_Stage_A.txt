@@ -1,0 +1,323 @@
+Test kết quả, STAGE_A:
+A. Về trạng thái của hệ thống khi hệ thống ở từng mức ngưỡng độ ẩm.
+Đỏ: Moisture < 20%,  Vàng: 20%<= Moisture <=50%, Xanh: Moisture>50%.
+
+Các chân GPIO-LED hiển thị đúng mưc logic
+| Component      | Pin | GPIO Port | Function       |
+|----------------|-----|-----------|----------------|
+| Button 1       | 0   | PA0       | Mode Toggle    |
+| Button 2       | 1   | PA1       | Manual Watering|
+| DHT11 Data     | 2   | PA2       | Sensor Input   |
+| Water Pump     | 3   | PA3       | Output Control |
+| LED Green      | 8   | PB0       | Status Output  |
+| LED Red        | 9   | PB1       | Status Output  |
+| LED Yellow     | 10  | PB2       | Status Output  |
+
+
+LED XANH:
+[System] Added 10% moisture (now 100.0%)
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> HIGH
+[LED] State: GREEN (Normal)
+
+LED VÀNG:
+[System] Removed 10% moisture (now 40.0%)
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+
+LED ĐỎ:
+[System] Removed 10% moisture (now 10.0%)
+[GPIO] Write pin 9 -> HIGH
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> LOW
+[LED] State: RED (Low Moisture Alert)
+
+
+B. 
+
+1. Cho phép tự động thay đổi độ ẩm(giảm) giống như trong thế giới thực- Nhấn phím 3
+    1.1 [System] Auto moisture change ENABLED
+    1.2 [System] Auto moisture change DISABLED
+2. Hệ thống có tích hợp thời gian thực, nghĩa là nếu chúng ta cho phép tự động thay đổi độ ẩm và chuyển đổi liên tục giữa MODE_MANUAL và MODE_AUTO để chương trình tự nhận biết thời gian đang trôi qua và độ ẩm sẽ được giảm một cách ngẫu nhiên 
+3. Khi độ ẩm xuống quá thấp- khi đèn báo đỏ, thì hệ thống không cho phép người dùng tùy chọn MODE_MANUAL và MODE_AUTO nữa
+4. Chế độ MODE_MANUAL (qua nút nhấn số 2) hoạt động một cách trơn tru(+15% moisture)
+
+// Bật chế độ tự động điều chỉnh độ ẩm (auto moisture change)
+Enter command: 3
+[System] Auto moisture change ENABLED
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> HIGH
+[LED] State: GREEN (Normal)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  55.3%
+Auto Mode:       ENABLED
+----------------------
+// Tắt chế độ tự động điều chỉnh độ ẩm (auto moisture change) - Nhưng thời gian thực vẫn được cập nhật
+Enter command: 3
+[System] Auto moisture change DISABLED
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> HIGH
+[LED] State: GREEN (Normal)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  55.3%
+Auto Mode:       DISABLED
+----------------------
+// Hệ thống tự động random giảm của độ ẩm theo thời gian thực, giữ chế độ động giảm này 
+
+Enter command: 3
+[System] Auto moisture change ENABLED
+[AUTO] Moisture decreased by 5.9% (now 49.4%)
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  49.4%
+Auto Mode:       ENABLED
+----------------------
+
+/*Bật tắt phím 1 liên tục để hệ thống tự động thay đổi độ ẩm theo thời gian thực.*/
+//MODE_MANUAL, giữ chế độ "[System] Auto moisture change ENABLED"
+
+Enter command: 1
+[AUTO] Moisture decreased by 9.5% (now 39.9%)
+[System] Mode changed to: MANUAL
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+--- SYSTEM STATUS ---
+Current Mode:    MANUAL
+Moisture Level:  39.9%
+Auto Mode:       ENABLED
+----------------------
+//MODE_AUTO, giữ chế độ "[System] Auto moisture change ENABLED"
+
+Enter command: 1
+[AUTO] Moisture decreased by 7.6% (now 32.3%)
+[System] Mode changed to: AUTO
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  32.3%
+Auto Mode:       ENABLED
+----------------------
+
+//MODE_MANUAL, giữ chế độ "[System] Auto moisture change ENABLED"
+Enter command: 1
+[AUTO] Moisture decreased by 9.1% (now 23.2%)
+[System] Mode changed to: MANUAL
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+--- SYSTEM STATUS ---
+Current Mode:    MANUAL
+Moisture Level:  23.2%
+Auto Mode:       ENABLED
+----------------------
+
+/*Khi độ ẩm thấp xuống dưới ngưỡng nguy hiểm, không cho phép người dùng tuỳ chỉnh MODE nữa*/
+//MODE_AUTO, giữ chế độ "[System] Auto moisture change ENABLED"
+Enter command: 1
+[AUTO] Moisture decreased by 5.6% (now 17.6%)
+[GPIO] Write pin 9 -> HIGH
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> LOW
+[LED] State: RED (Low Moisture Alert)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  17.6%
+Auto Mode:       ENABLED
+----------------------
+
+/*Khi độ ẩm thấp xuống dưới ngưỡng nguy hiểm, không cho phép người dùng tuỳ chỉnh MODE nữa*/
+//MODE_MANUAL, giữ chế độ "[System] Auto moisture change ENABLED"
+Enter command: 1
+[AUTO] Moisture decreased by 8.3% (now 9.3%)
+[GPIO] Write pin 9 -> HIGH
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> LOW
+[LED] State: RED (Low Moisture Alert)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  9.3%
+Auto Mode:       ENABLED
+----------------------
+
+/*Khi độ ẩm thấp xuống dưới ngưỡng nguy hiểm, không cho phép người dùng tuỳ chỉnh MODE nữa*/
+//MODE_AUTO, giữ chế độ "[System] Auto moisture change ENABLED"
+Enter command: 1
+[AUTO] Moisture decreased by 7.9% (now 1.4%)
+[GPIO] Write pin 9 -> HIGH
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> LOW
+[LED] State: RED (Low Moisture Alert)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  1.4%
+Auto Mode:       ENABLED
+----------------------
+
+/*Khi độ ẩm thấp xuống dưới ngưỡng nguy hiểm, không cho phép người dùng tuỳ chỉnh MODE nữa*/
+//MODE_AUTO, giữ chế độ "[System] Auto moisture change ENABLED"
+Enter command: 1
+[AUTO] Moisture decreased by 5.2% (now 0.0%)
+[GPIO] Write pin 9 -> HIGH
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> LOW
+[LED] State: RED (Low Moisture Alert)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  0.0%
+Auto Mode:       ENABLED
+----------------------
+
+/*Khi độ ẩm thấp xuống dưới ngưỡng nguy hiểm, không cho phép người dùng tuỳ chỉnh MODE nữa*/
+//MODE_AUTO, giữ chế độ "[System] Auto moisture change ENABLED"
+Enter command: 1
+[GPIO] Write pin 9 -> HIGH
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> LOW
+[LED] State: RED (Low Moisture Alert)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  0.0%
+Auto Mode:       ENABLED
+----------------------
+/*Hack hệ thống bằng cách cho độ ẩm tăng qua khỏi mức nguy hiểm, và cho phép người dùng tưới bằng MODE_MANUAL*/
+// Vẫn giữ chế độ "[System] Auto moisture change ENABLED"
+Enter command: 4
+[System] Added 10% moisture (now 10.0%)
+[AUTO] Moisture decreased by 5.8% (now 4.2%)
+[GPIO] Write pin 9 -> HIGH
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> LOW
+[LED] State: RED (Low Moisture Alert)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  4.2%
+Auto Mode:       ENABLED
+----------------------
+
+Enter command: 4
+[System] Added 10% moisture (now 14.2%)
+[GPIO] Write pin 9 -> HIGH
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> LOW
+[LED] State: RED (Low Moisture Alert)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  14.2%
+Auto Mode:       ENABLED
+----------------------
+
+Enter command: 4
+[System] Added 10% moisture (now 24.2%)
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+--- SYSTEM STATUS ---
+Current Mode:    AUTO
+Moisture Level:  24.2%
+Auto Mode:       ENABLED
+----------------------
+
+//MODE_MANUAL, giữ chế độ "[System] Auto moisture change ENABLED"
+Enter command: 1
+[System] Mode changed to: MANUAL
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+--- SYSTEM STATUS ---
+Current Mode:    MANUAL
+Moisture Level:  27.2%
+Auto Mode:       ENABLED
+----------------------
+/*Bắt đầu tưới bằng tay, thông qua nút nhấn số 2*/
+Enter command: 2
+[AUTO] Moisture decreased by 8.3% (now 18.9%)
+[System] Manual watering activated! +15% moisture
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+--- SYSTEM STATUS ---
+Current Mode:    MANUAL
+Moisture Level:  33.9%
+Auto Mode:       ENABLED
+----------------------
+Enter command: 2
+[AUTO] Moisture decreased by 8.3% (now 18.9%)
+[System] Manual watering activated! +15% moisture
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+--- SYSTEM STATUS ---
+Current Mode:    MANUAL
+Moisture Level:  33.9%
+Auto Mode:       ENABLED
+----------------------
+Enter command: 2
+[AUTO] Moisture decreased by 5.4% (now 43.5%)
+[System] Manual watering activated! +15% moisture
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> LOW
+[GPIO] Write pin 8 -> HIGH
+[LED] State: GREEN (Normal)
+
+--- SYSTEM STATUS ---
+Current Mode:    MANUAL
+Moisture Level:  58.5%
+Auto Mode:       ENABLED
+----------------------
+
+/* Nhấn phím 3 Tắt chế độ "[System] Auto moisture change ENABLED", chuyển qua [System] Auto moisture change DISABLED*/
+Enter command: 3
+[System] Auto moisture change DISABLED
+[GPIO] Write pin 9 -> LOW
+[GPIO] Write pin 10 -> HIGH
+[GPIO] Write pin 8 -> LOW
+[LED] State: YELLOW (Sufficient)
+
+--- SYSTEM STATUS ---
+Current Mode:    MANUAL
+Moisture Level:  58.5%
+Auto Mode:       DISABLED
+----------------------
+
+
+
+
