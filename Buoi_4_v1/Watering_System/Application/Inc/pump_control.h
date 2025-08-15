@@ -7,5 +7,6 @@ void Pump_Init(void);
 // Điều khiển bơm
 void Pump_SetState(bool state);
 
-// Kiểm tra trạng thái bơm
+// support for stage_B
+//Kiểm tra trạng thái bơm
 bool Pump_GetState(void);

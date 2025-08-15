@@ -50,7 +50,15 @@ B. Yêu cầu chức năng:
 3. Logic điều khiển tưới nước tự động:
 4. Điều khiển bơm:
 5. Điều khiển LED trạng thái:
+Đỏ, vàng, xanh
 6. Xử lí nút nhấn:
+Tôi muốn nhấn mạnh lại lần nữa về nút nhấn. 
+Nút nhấn 1: Chọn MODE_AUTO hoặc MODE_MANUAL
+Nhấn nút 1 lần sẽ cho chúng ta chuyển mode, nhấn nút lần nữa sẽ chuyển thành mode còn lại.
+Nút nhấn 2: Kích hoạt chế độ tưới nước thủ công( bắt buộc nút nhấn 1 ở MODE_MANUAL)
+Còn về LED, thì nó sẽ có 3 màu để thông báo trạng thái xanh lá, vàng, đỏ.
+Nếu độ ẩm thấp(xuống dưới ngưỡng) thì sẽ báo đỏ, và hệ thống tự chuyển sang chế độ MODE_AUTO.
+Nếu độ ẩm vừa đủ hoặc cao( lớn hơn hoặc trên ngưỡng) thì led sẽ báo vàng hoặc xanh lá. Và lúc này hệ thống sẽ cho phép người dùng chọn  MODE_AUTO hoặc MODE_MANUAL thông qua nút nhấn 1. và đồng thời cho phép người dùng chọn Nút 2: Kích hoạt tưới nước thủ công
 7. Thông báo trạng thái:
 8. Tối ưu bộ nhớ:
     + Tránh sử dụng quá nhiều chuỗi kí tự cố định (const chart *) nếu không gian flash hạn chế

@@ -1,4 +1,13 @@
 Stage_A.
+Stage A (Phiên bản ban đầu):
+Mục đích: Thiết lập khung cơ bản, chứng minh hệ thống chuyển đổi chế độ (AUTO/MANUAL) qua nút nhấn
+File hỗ trợ chính:
++button_handler.c (xử lý nút nhấn đơn giản)
++main_logic.c (vòng lặp chính cơ bản)
++Các file driver mô phỏng (sim_*.c)
+
+
+
 Chien@DESKTOP-617VVGL MSYS /d/HOC_NHUNG/BAI_TAP/Buoi_4/Watering_System/Simulation
 $ ./Build/watering_system_sim.exe
 
@@ -21,3 +30,36 @@ Starting main loop...
 
 
 Stage_B.
+Stage B (Phiên bản nâng cấp):
+Mục đích: Thêm logic tưới tự động thông minh, quản lý thời gian tưới, cảnh báo độ ẩm
+File hỗ trợ chính:
++button_handler.c (đã thêm chống dội nút)
++main_logic.c (thêm logic tưới theo độ ẩm/thời gian)
++sensor_interface.c (giả lập cảm biến chi tiết)
++pump_control.c (cần thêm hàm Pump_GetState())
++irrigation_config.h (quản lý cấu hình)
+
+=== AUTOMATIC IRRIGATION SYSTEM SIMULATION ===
+Initializing system...
+[SENSOR] Initialized
+[PUMP] Initialized
+[LED] Initialized
+Starting main loop...
+----------------------------------------
+
+=== Starting Main Control Loop ===
+[SENSOR] Moisture: 68%, Temp: 27.9C, Hum: 60.2%
+[LED] State: NORMAL
+[SYSTEM] Mode: AUTO, Pump: OFF
+
+[SENSOR] Moisture: 72%, Temp: 28.9C, Hum: 62.5%
+[LED] State: NORMAL
+[SYSTEM] Mode: AUTO, Pump: OFF
+
+[SENSOR] Moisture: 72%, Temp: 28.6C, Hum: 62.3%
+[LED] State: NORMAL
+[SYSTEM] Mode: AUTO, Pump: OFF
+
+[SENSOR] Moisture: 73%, Temp: 26.0C, Hum: 61.9%
+[LED] State: NORMAL
+[SYSTEM] Mode: AUTO, Pump: OFF

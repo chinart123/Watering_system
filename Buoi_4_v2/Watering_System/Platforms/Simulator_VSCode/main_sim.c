@@ -1,4 +1,209 @@
 #if 1
+/* Watering_System/Platforms/Simulator_VSCode/main_sim.c */
+#include "hal_gpio.h"
+#include "hal_time.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+
+// ========================
+// Định nghĩa các MACRO
+// ========================
+
+// Ngưỡng độ ẩm
+#define MOISTURE_RED_THRESHOLD    20.0f   // Dưới 20%: Báo đỏ
+#define MOISTURE_GREEN_THRESHOLD  50.0f   // Trên 50%: Báo xanh
+// Giữa 20-50%: Báo vàng
+
+// Chân GPIO (theo hardware_map.md)
+#define BUTTON_1_PIN      0   // PA0 - Mode Toggle
+#define BUTTON_2_PIN      1   // PA1 - Manual Watering
+#define LED_PIN_GREEN     8   // PB0
+#define LED_PIN_RED       9   // PB1
+#define LED_PIN_YELLOW    10  // PB2
+
+// Thời gian
+#define BUTTON_DEBOUNCE_MS     250
+#define AUTO_UPDATE_INTERVAL   5000    // 5 giây
+#define WATERING_RATE          0.5f    // 0.5% moisture/s
+
+// ========================
+// Biến toàn cục
+// ========================
+typedef enum { MODE_AUTO, MODE_MANUAL } SystemMode;
+
+static SystemMode current_mode = MODE_AUTO;
+static float simulated_moisture = 50.0f;
+static bool auto_mode_enabled = true;
+
+// ========================
+// Hàm cập nhật LED
+// ========================
+void update_led_state() {
+    if (simulated_moisture < MOISTURE_RED_THRESHOLD) {
+        // LED Đỏ - Ngưỡng nguy hiểm
+        HAL_GPIO_WritePin(LED_PIN_RED, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(LED_PIN_YELLOW, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(LED_PIN_GREEN, GPIO_PIN_RESET);
+        printf("[LED] State: RED (Low Moisture Alert)\n");
+        
+        // Tự động chuyển sang MODE_AUTO
+        current_mode = MODE_AUTO;  
+    } 
+    else if (simulated_moisture >= MOISTURE_GREEN_THRESHOLD) {
+        // LED Xanh - Ngưỡng tối ưu
+        HAL_GPIO_WritePin(LED_PIN_RED, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(LED_PIN_YELLOW, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(LED_PIN_GREEN, GPIO_PIN_SET);
+        printf("[LED] State: GREEN (Normal)\n");
+    } 
+    else {
+        // LED Vàng - Ngưỡng cảnh báo
+        HAL_GPIO_WritePin(LED_PIN_RED, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(LED_PIN_YELLOW, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(LED_PIN_GREEN, GPIO_PIN_RESET);
+        printf("[LED] State: YELLOW (Sufficient)\n");
+    }
+}
+
+// ========================
+// Hàm xử lý nút nhấn
+// ========================
+void handle_buttons(GPIO_PinState button1_state, GPIO_PinState button2_state) {
+    static uint32_t last_button1_time = 0;
+    static uint32_t last_button2_time = 0;
+
+    // Nút 1: Chuyển mode (chỉ khi độ ẩm > ngưỡng đỏ)
+    if (button1_state == GPIO_PIN_SET && 
+        (HAL_GetTick() - last_button1_time > BUTTON_DEBOUNCE_MS) &&
+        simulated_moisture >= MOISTURE_RED_THRESHOLD) 
+    {
+        current_mode = (current_mode == MODE_AUTO) ? MODE_MANUAL : MODE_AUTO;
+        printf("[System] Mode changed to: %s\n", 
+              (current_mode == MODE_MANUAL) ? "MANUAL" : "AUTO");
+        last_button1_time = HAL_GetTick();
+    }
+    
+    // Nút 2: Tưới thủ công (chỉ trong MODE_MANUAL)
+    if (button2_state == GPIO_PIN_SET && 
+        current_mode == MODE_MANUAL &&
+        HAL_GetTick() - last_button2_time > BUTTON_DEBOUNCE_MS) 
+    {
+        printf("[System] Manual watering activated! +15%% moisture\n");
+        simulated_moisture += 15.0f;
+        if (simulated_moisture > 100) simulated_moisture = 100;
+        last_button2_time = HAL_GetTick();
+    }
+}
+
+// ========================
+// Hàm hiển thị trạng thái
+// ========================
+void display_system_status() {
+    printf("\n--- SYSTEM STATUS ---\n");
+    printf("Current Mode:    %s\n", current_mode == MODE_AUTO ? "AUTO" : "MANUAL");
+    printf("Moisture Level:  %.1f%%\n", simulated_moisture);
+    printf("Auto Mode:       %s\n", auto_mode_enabled ? "ENABLED" : "DISABLED");
+    printf("Red Threshold:   < %.1f%%\n", MOISTURE_RED_THRESHOLD);
+    printf("Green Threshold: > %.1f%%\n", MOISTURE_GREEN_THRESHOLD);
+    printf("----------------------\n");
+}
+
+// ========================
+// Hàm chế độ tự động
+// ========================
+void handle_auto_mode() {
+    static uint32_t last_update = 0;
+    
+    if (auto_mode_enabled && 
+        (HAL_GetTick() - last_update > AUTO_UPDATE_INTERVAL)) 
+    {
+        // Giảm độ ẩm ngẫu nhiên
+        float decrease = (rand() % 100) / 10.0f; // 0-10%
+        simulated_moisture -= decrease;
+        if (simulated_moisture < 0) simulated_moisture = 0;
+        
+        printf("[AUTO] Moisture decreased by %.1f%% (now %.1f%%)\n", 
+               decrease, simulated_moisture);
+        
+        last_update = HAL_GetTick();
+    }
+}
+
+// ========================
+// Hàm main
+// ========================
+int main() {
+    srand(time(NULL));
+    
+    printf("Starting Advanced Simulation (Macro Version)...\n");
+    printf("Controls:\n");
+    printf("  1 - Toggle Mode\n");
+    printf("  2 - Manual Watering\n");
+    printf("  3 - Toggle Auto Moisture Change\n");
+    printf("  4 - Add Moisture (+10%%)\n");
+    printf("  5 - Remove Moisture (-10%%)\n");
+    printf("LED Thresholds: RED < %.1f%%, GREEN > %.1f%%\n\n", 
+          MOISTURE_RED_THRESHOLD, MOISTURE_GREEN_THRESHOLD);
+    
+    // Khởi tạo GPIO
+    HAL_GPIO_Init(LED_PIN_GREEN, GPIO_MODE_OUTPUT);
+    HAL_GPIO_Init(LED_PIN_YELLOW, GPIO_MODE_OUTPUT);
+    HAL_GPIO_Init(LED_PIN_RED, GPIO_MODE_OUTPUT);
+    HAL_GPIO_Init(BUTTON_1_PIN, GPIO_MODE_INPUT);
+    HAL_GPIO_Init(BUTTON_2_PIN, GPIO_MODE_INPUT);
+    
+    // Trạng thái ban đầu
+    update_led_state();
+    display_system_status();
+    
+    while(1) {
+        printf("\nEnter command: ");
+        int c = getchar();
+        int ch;
+        while ((ch = getchar()) != '\n' && ch != EOF); // Clear buffer
+
+        GPIO_PinState button1_state = GPIO_PIN_RESET;
+        GPIO_PinState button2_state = GPIO_PIN_RESET;
+        
+        switch (c) {
+            case '1': button1_state = GPIO_PIN_SET; break;
+            case '2': button2_state = GPIO_PIN_SET; break;
+            case '3': 
+                auto_mode_enabled = !auto_mode_enabled;
+                printf("[System] Auto moisture change %s\n",
+                      auto_mode_enabled ? "ENABLED" : "DISABLED");
+                break;
+            case '4': 
+                simulated_moisture += 10.0f;
+                if (simulated_moisture > 100) simulated_moisture = 100;
+                printf("[System] Added 10%% moisture (now %.1f%%)\n", simulated_moisture);
+                break;
+            case '5': 
+                simulated_moisture -= 10.0f;
+                if (simulated_moisture < 0) simulated_moisture = 0;
+                printf("[System] Removed 10%% moisture (now %.1f%%)\n", simulated_moisture);
+                break;
+            default:
+                printf("Invalid command! Valid options: 1, 2, 3, 4, 5\n");
+                continue;
+        }
+        
+        // Xử lý chế độ tự động
+        handle_auto_mode();
+        
+        // Cập nhật trạng thái
+        handle_buttons(button1_state, button2_state);
+        update_led_state();
+        display_system_status();
+    }
+    
+    return 0;
+}
+
+#endif 
+#if 0
 //main_sim.c version 3: Thay dodi
 /* Watering_System/Platforms/Simulator_VSCode/main_sim.c */
 #include "hal_gpio.h"
